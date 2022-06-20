@@ -4,6 +4,7 @@ use std::io::{BufRead, BufReader, Read};
 use std::path::{Path, PathBuf};
 
 use byteorder::{LittleEndian, ReadBytesExt};
+use md5::digest::OutputSizeUser;
 use md5::{digest::generic_array::GenericArray, Digest, Md5};
 use memmap::Mmap;
 
@@ -37,7 +38,7 @@ pub struct Zim {
     pub checksum: Checksum,
 }
 
-pub type Checksum = GenericArray<u8, <Md5 as Digest>::OutputSize>;
+pub type Checksum = GenericArray<u8, <Md5 as OutputSizeUser>::OutputSize>;
 
 /// A ZIM file starts with a header.
 pub struct ZimHeader {
@@ -324,10 +325,10 @@ fn compute_checksum(path: &Path, checksum_pos: u64) -> Result<Checksum> {
             break;
         }
 
-        hasher.input(&buffer[..read]);
+        hasher.update(&buffer[..read]);
     }
 
-    Ok(hasher.result())
+    Ok(hasher.finalize())
 }
 
 #[test]

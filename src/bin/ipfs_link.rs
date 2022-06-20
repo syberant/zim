@@ -35,7 +35,7 @@ fn main() {
     let root_output = Path::new(root);
 
     let input = matches.value_of("INPUT").unwrap();
-    let mut mb = MultiBar::new();
+    let mb = MultiBar::new();
 
     mb.println(&format!("Linking files using {} into {}:", input, root));
     mb.println("");

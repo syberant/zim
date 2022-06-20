@@ -1,5 +1,4 @@
 use std::collections::HashMap;
-use std::error::Error;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
@@ -16,7 +15,7 @@ fn main() {
         .about("Extract zim files")
         .arg(
             Arg::with_name("out")
-                .short("o")
+                .short('o')
                 .long("out")
                 .help("Output directory")
                 .takes_value(true),
@@ -110,7 +109,7 @@ fn main() {
             });
     }
 
-    pb.finish_with_message(&format!(
+    pb.finish_with_message(format!(
         "Extraction done in {}s",
         sw.elapsed_ms() as f64 / 1000.
     ));
@@ -137,11 +136,7 @@ fn safe_write<T: AsRef<[u8]>>(path: &Path, data: T, count: usize) {
             let mut writer = BufWriter::new(&file);
 
             if let Err(why) = writer.write_all(data.as_ref()) {
-                eprintln!(
-                    "skipping: couldn't write to {}: {}",
-                    display,
-                    why.description()
-                );
+                eprintln!("skipping: couldn't write to {}: {}", display, why);
             }
         }
     }

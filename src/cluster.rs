@@ -1,11 +1,13 @@
 use std::fmt;
 use std::io::Cursor;
 use std::io::Read;
+use std::ops::Deref;
 use std::sync::{Arc, RwLock};
 
 use bitreader::BitReader;
 use byteorder::{LittleEndian, ReadBytesExt};
 use memmap::Mmap;
+use ouroboros::self_referencing;
 use xz2::read::XzDecoder;
 
 use crate::errors::{Error, Result};
@@ -101,27 +103,35 @@ impl<'a> Cluster<'a> {
             }
         }
 
-        match Blob::try_new(self.0.read().unwrap(), |lock| lock.get_blob(idx)) {
-            Ok(blob) => Ok(blob),
-            Err(rental::RentalError(err, _)) => Err(err),
+        let blob = BlobTryBuilder {
+            guard: self.0.read().unwrap(),
+            slice_builder: |guard| guard.get_blob(idx),
         }
+        .try_build()?;
+
+        Ok(blob)
     }
 }
 
-rental! {
-    pub mod rents {
-        use super::*;
+#[self_referencing]
+pub struct Blob<'a, 'b: 'a> {
+    guard: std::sync::RwLockReadGuard<'b, InnerCluster<'a>>,
+    #[borrows(guard)]
+    slice: &'this [u8],
+}
 
-        #[rental(deref_suffix)]
-        pub struct Blob<'a, 'b>  {
-            #[target_ty = "InnerCluster<'a>"]
-            guard: std::sync::RwLockReadGuard<'b, InnerCluster<'a>>,
-            slice: &'guard [u8],
-        }
+impl<'a, 'b: 'a> Deref for Blob<'a, 'b> {
+    type Target = [u8];
+    fn deref(&self) -> &Self::Target {
+        self.borrow_slice()
     }
 }
 
-use rents::*;
+impl<'a, 'b: 'a> AsRef<[u8]> for Blob<'a, 'b> {
+    fn as_ref(&self) -> &[u8] {
+        self.borrow_slice()
+    }
+}
 
 impl<'a> InnerCluster<'a> {
     fn new(

@@ -1,56 +1,36 @@
 use bitreader;
 use std;
-use std::fmt;
+
+use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;
 
-#[derive(Debug)]
+#[derive(Debug, Error)]
 pub enum Error {
+    #[error("unknown compression")]
     UnknownCompression,
+    #[error("unknown mimetype")]
     UnknownMimeType,
+    #[error("invalid magic number")]
     InvalidMagicNumber,
+    #[error("invalid major version, must be 5 or 6")]
     InvalidVersion,
+    #[error("invalid header")]
     InvalidHeader,
+    #[error("invalid namespace")]
     InvalidNamespace,
+    #[error("cluster extension requires major version 6")]
     InvalidClusterExtension,
+    #[error("cluster is missing a blob list")]
     MissingBlobList,
+    #[error("missing checksum")]
     MissingChecksum,
+    #[error("invalid checksum")]
     InvalidChecksum,
+    #[error("out of bounds access")]
     OutOfBounds,
-    ParsingError(Box<dyn std::error::Error + Send + Sync>),
-}
-
-impl fmt::Display for Error {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        f.write_str(std::error::Error::description(self))
-    }
-}
-
-impl std::error::Error for Error {
-    fn description(&self) -> &str {
-        match *self {
-            Error::UnknownCompression => "unknown compression",
-            Error::UnknownMimeType => "unknown mimetype",
-            Error::InvalidMagicNumber => "invalid magic number",
-            Error::InvalidVersion => "invalid major version, must be 5 or 6",
-            Error::InvalidHeader => "invalid header",
-            Error::InvalidClusterExtension => "cluster extension requires major version 6",
-            Error::MissingBlobList => "cluster is missing a blob list",
-            Error::OutOfBounds => "out of bounds access",
-            Error::ParsingError(_) => "failed to parse",
-            Error::InvalidNamespace => "invalid namespace",
-            Error::MissingChecksum => "missing checksum",
-            Error::InvalidChecksum => "invalid checksum",
-        }
-    }
-
-    #[inline]
-    fn cause(&self) -> Option<&dyn std::error::Error> {
-        match *self {
-            Error::ParsingError(ref err) => Some(&**err),
-            _ => None,
-        }
-    }
+    #[error("failed to parse: {0}")]
+    ParsingError(#[from] Box<dyn std::error::Error + Send + Sync>),
 }
 
 impl From<std::string::FromUtf8Error> for Error {
