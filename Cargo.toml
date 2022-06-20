@@ -8,7 +8,7 @@ homepage = "https://github.com/dignifiedquire/zim"
 description = "ZIM reading and extraction"
 readme = "README.md"
 license = "Apache-2.0/MIT"
-edition = "2018"
+edition = "2021"
 
 keywords = ["parser", "zim"]
 categories = ["encoding", "parser-implementations"]
