@@ -13,10 +13,13 @@ use xz2::read::XzDecoder;
 use crate::errors::{Error, Result};
 
 #[repr(u8)]
-#[derive(Debug, PartialEq, Eq, Clone, Copy)]
+#[derive(Debug, PartialEq, Eq, Clone, Copy, Hash)]
 pub enum Compression {
     None = 0,
-    LZMA2 = 4,
+    Zlib = 2,
+    Bzip2 = 3,
+    Lzma2 = 4,
+    Zstd = 5,
 }
 
 impl From<Compression> for u8 {
@@ -30,8 +33,11 @@ impl Compression {
         match raw {
             0 => Ok(Compression::None),
             1 => Ok(Compression::None),
-            4 => Ok(Compression::LZMA2),
-            _ => Err(Error::UnknownCompression),
+            2 => Ok(Compression::Zlib),
+            3 => Ok(Compression::Bzip2),
+            4 => Ok(Compression::Lzma2),
+            5 => Ok(Compression::Zstd),
+            _ => Err(Error::UnknownCompression(raw)),
         }
     }
 }
@@ -92,6 +98,10 @@ impl<'a> Cluster<'a> {
 
     pub fn decompress(&self) -> Result<()> {
         self.0.write().unwrap().decompress()
+    }
+
+    pub fn compression(&self) -> Compression {
+        self.0.read().unwrap().compression
     }
 
     pub fn get_blob<'b: 'a>(&'b self, idx: u32) -> Result<Blob<'a, 'b>> {
@@ -171,10 +181,10 @@ impl<'a> InnerCluster<'a> {
         };
 
         Ok(Self {
-            extended: extended,
-            compression: compression,
-            start: start,
-            end: end,
+            extended,
+            compression,
+            start,
+            end,
             size: cluster_size,
             view: cluster_view,
             decompressed: None,
@@ -184,27 +194,39 @@ impl<'a> InnerCluster<'a> {
 
     fn needs_decompression(&self) -> bool {
         match self.compression {
-            Compression::LZMA2 => self.decompressed.is_none() || self.blob_list.is_none(),
+            Compression::Lzma2 | Compression::Bzip2 | Compression::Zlib | Compression::Zstd => {
+                self.decompressed.is_none() || self.blob_list.is_none()
+            }
             Compression::None => false,
         }
     }
 
     fn decompress(&mut self) -> Result<()> {
-        match self.compression {
-            Compression::LZMA2 => {
-                if self.decompressed.is_none() {
+        if self.decompressed.is_none() {
+            match self.compression {
+                Compression::Lzma2 => {
                     let mut decoder = XzDecoder::new(&self.view[1..]);
                     let mut d = Vec::with_capacity(self.view.len());
                     decoder.read_to_end(&mut d)?;
                     self.decompressed = Some(d);
                 }
+                Compression::Bzip2 => {
+                    todo!("bzip2");
+                }
+                Compression::Zlib => {
+                    todo!("zlib");
+                }
+                Compression::Zstd => {
+                    let out = zstd::stream::decode_all(&self.view[1..])?;
+                    self.decompressed = Some(out);
+                }
+                Compression::None => {}
             }
-            Compression::None => {}
         }
 
         if self.blob_list.is_none() {
             match self.compression {
-                Compression::LZMA2 => {
+                Compression::Lzma2 | Compression::Bzip2 | Compression::Zlib | Compression::Zstd => {
                     let cur = Cursor::new(self.decompressed.as_ref().unwrap());
                     let blob_list = parse_blob_list(cur, self.extended)?;
                     self.blob_list = Some(blob_list);
@@ -228,7 +250,10 @@ impl<'a> InnerCluster<'a> {
                 };
 
                 Ok(match self.compression {
-                    Compression::LZMA2 => {
+                    Compression::Lzma2
+                    | Compression::Bzip2
+                    | Compression::Zlib
+                    | Compression::Zstd => {
                         // decompressed, so we know this exists
                         &self.decompressed.as_ref().unwrap().as_slice()[start..end]
                     }

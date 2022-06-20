@@ -60,7 +60,7 @@ fn main() {
             .expect("failed to get main page");
         println!("Main page is {}", page.url);
     }
-    println!("");
+    println!();
 
     let pb = ProgressBar::new(zim_file.article_count() as u64);
     let style = ProgressStyle::default_bar()
@@ -91,7 +91,7 @@ fn main() {
             false
         })
         .for_each(|entry| {
-            process_file(&root_output, &cluster_map, entry, &pb);
+            process_file(root_output, &cluster_map, entry, &pb);
         });
 
     if !skip_link {
@@ -105,7 +105,7 @@ fn main() {
                 false
             })
             .for_each(|entry| {
-                process_link(&zim_file, &root_output, entry, skip_link, flatten_link, &pb);
+                process_link(&zim_file, root_output, entry, skip_link, flatten_link, &pb);
             });
     }
 
@@ -260,9 +260,9 @@ fn ignore_exists_err<T: AsRef<str>>(e: std::io::Error, msg: T) {
 fn make_path(root: &Path, namespace: Namespace, url: &str, mime_type: &MimeType) -> PathBuf {
     let mut s = String::new();
     s.push(namespace as u8 as char);
-    let mut path = if url.starts_with("/") {
+    let mut path = if url.starts_with('/') {
         // make absolute urls relative to the output folder
-        let url = url.replacen("/", "", 1);
+        let url = url.replacen('/', "", 1);
         root.join(&s).join(url)
     } else {
         root.join(&s).join(url)

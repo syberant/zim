@@ -1,6 +1,4 @@
 use crate::directory_entry::DirectoryEntry;
-use std;
-
 use crate::zim::Zim;
 
 pub struct DirectoryIterator<'a> {
@@ -14,7 +12,7 @@ impl<'a> DirectoryIterator<'a> {
         DirectoryIterator {
             max: zim.header.article_count,
             next: 0,
-            zim: zim,
+            zim,
         }
     }
 }
@@ -29,12 +27,8 @@ impl<'a> std::iter::Iterator for DirectoryIterator<'a> {
 
         let dir_entry_ptr = self.zim.url_list[self.next as usize] as usize;
         self.next += 1;
+        let slice = self.zim.master_view.get(dir_entry_ptr..);
 
-        let len = self.zim.master_view.len();
-        let slice = self
-            .zim
-            .master_view
-            .get(dir_entry_ptr..(len - dir_entry_ptr));
         match slice {
             Some(slice) => DirectoryEntry::new(self.zim, slice).ok(),
             None => None,

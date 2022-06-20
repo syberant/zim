@@ -187,14 +187,14 @@ fn parse_header(master_view: &Mmap) -> Result<(ZimHeader, Vec<String>)> {
 
     let version_major = header_cur.read_u16::<LittleEndian>()?;
     if version_major != 5 && version_major != 6 {
-        return Err(Error::InvalidVersion);
+        return Err(Error::InvalidVersion(version_major));
     }
 
     let version_minor = header_cur.read_u16::<LittleEndian>()?;
 
     let mut uuid = [0u8; 16];
-    for i in 0..16 {
-        uuid[i] = header_cur.read_u8()?;
+    for el in &mut uuid {
+        *el = header_cur.read_u8()?;
     }
 
     let article_count = header_cur.read_u32::<LittleEndian>()?;
@@ -331,21 +331,54 @@ fn compute_checksum(path: &Path, checksum_pos: u64) -> Result<Checksum> {
     Ok(hasher.finalize())
 }
 
-#[test]
-fn test_zim() {
-    let zim = Zim::new("fixtures/wikipedia_ab_all_2017-03.zim").expect("failed to parse fixture");
+#[cfg(test)]
+mod tests {
+    use crate::cluster::Compression;
 
-    assert_eq!(zim.header.version_major, 5);
-    let cl0 = zim.get_cluster(0).unwrap();
-    assert_eq!(&cl0.get_blob(0).unwrap()[..], &[97, 98, 107][..]);
+    use super::*;
+    #[test]
+    fn test_zim_ab_all_2017_03() {
+        let zim =
+            Zim::new("fixtures/wikipedia_ab_all_2017-03.zim").expect("failed to parse fixture");
 
-    let cl1 = zim.get_cluster(zim.header.cluster_count - 1).unwrap();
-    let b = cl1.get_blob(0).unwrap();
-    assert_eq!(&b[0..10], &[71, 73, 70, 56, 57, 97, 44, 1, 150, 0]);
-    assert_eq!(
-        &b[b.len() - 10..],
-        &[222, 192, 21, 240, 155, 91, 65, 0, 0, 59]
-    );
+        assert_eq!(zim.header.version_major, 5);
+        let cl0 = zim.get_cluster(0).unwrap();
+        assert_eq!(&cl0.get_blob(0).unwrap()[..], &[97, 98, 107][..]);
 
-    assert_eq!(zim.iterate_by_urls().count(), 3111);
+        let cl1 = zim.get_cluster(zim.header.cluster_count - 1).unwrap();
+        let b = cl1.get_blob(0).unwrap();
+        assert_eq!(&b[0..10], &[71, 73, 70, 56, 57, 97, 44, 1, 150, 0]);
+        assert_eq!(
+            &b[b.len() - 10..],
+            &[222, 192, 21, 240, 155, 91, 65, 0, 0, 59]
+        );
+
+        assert_eq!(zim.iterate_by_urls().count(), 3111);
+    }
+
+    #[test]
+    fn test_zim_ab_all_maxi_2022_05() {
+        let zim = Zim::new("fixtures/wikipedia_ab_all_maxi_2022-05.zim")
+            .expect("failed to parse fixture");
+
+        assert_eq!(zim.header.version_major, 5);
+        assert_eq!(zim.header.article_count, 9890);
+
+        let cl0 = zim.get_cluster(0).unwrap();
+        assert_eq!(
+            &cl0.get_blob(0).unwrap()[..],
+            &[50, 48, 50, 50, 45, 48, 53, 45, 49, 52][..]
+        );
+        assert_eq!(cl0.compression(), Compression::Zstd);
+
+        let cl1 = zim.get_cluster(zim.header.cluster_count - 1).unwrap();
+        let b = cl1.get_blob(0).unwrap();
+        assert_eq!(&b[0..10], &[15, 13, 88, 97, 112, 105, 97, 110, 32, 71]);
+        assert_eq!(
+            &b[b.len() - 10..],
+            &[148, 79, 82, 254, 154, 242, 15, 122, 255, 0],
+        );
+
+        assert_eq!(zim.iterate_by_urls().count(), 9890);
+    }
 }

@@ -1,4 +1,3 @@
-use std;
 use std::convert::TryFrom;
 use std::io::BufRead;
 use std::io::Cursor;
@@ -63,12 +62,12 @@ impl DirectoryEntry {
         };
 
         Ok(DirectoryEntry {
-            mime_type: mime_type,
+            mime_type,
             namespace: Namespace::try_from(namespace)?,
             revision: rev,
-            url: url,
-            title: title,
-            target: target,
+            url,
+            title,
+            target,
         })
     }
 }

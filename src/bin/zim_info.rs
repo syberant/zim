@@ -1,6 +1,8 @@
 extern crate clap;
 extern crate zim;
 
+use std::collections::HashSet;
+
 use clap::{App, Arg};
 use zim::Zim;
 
@@ -22,6 +24,11 @@ fn main() {
 
     let zim_file = Zim::new(input).expect("failed to parse input");
 
+    println!(
+        "Version {}.{}",
+        zim_file.header.version_major, zim_file.header.version_minor
+    );
+
     println!("UUID: {}", &zim_file.header.uuid);
     println!("Article Count: {}", zim_file.article_count());
     println!("Mime List Pos: {}", zim_file.header.mime_list_pos);
@@ -31,6 +38,15 @@ fn main() {
     println!("Cluster Pointer Pos: {}", zim_file.header.cluster_ptr_pos);
     println!("Checksum: {}", hex::encode(&zim_file.checksum));
     println!("Checksum Pos: {}", zim_file.header.checksum_pos);
+
+    let mut compressions = HashSet::new();
+    for cluster_id in 0..zim_file.header.cluster_count {
+        let cluster = zim_file
+            .get_cluster(cluster_id)
+            .expect("failed to read cluster");
+        compressions.insert(cluster.compression());
+    }
+    println!("Compressions: {:?}", compressions);
 
     let (main_page, main_page_idx) = if let Some(main_page_idx) = zim_file.header.main_page {
         let page = zim_file
