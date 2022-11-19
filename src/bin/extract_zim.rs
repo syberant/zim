@@ -67,6 +67,7 @@ fn main() {
         .template(
             "{msg}\n{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
         )
+        .unwrap()
         .progress_chars("#>-");
     pb.set_style(style);
 
