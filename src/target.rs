@@ -1,4 +1,4 @@
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum Target {
     /// Redirect specified as a URL index
     Redirect(u32),

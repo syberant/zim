@@ -166,7 +166,7 @@ impl<'a> InnerCluster<'a> {
             .ok_or(Error::OutOfBounds)?;
 
         let (extended, compression) =
-            parse_details(cluster_view.get(0).ok_or(Error::OutOfBounds)?)?;
+            parse_details(cluster_view.first().ok_or(Error::OutOfBounds)?)?;
 
         // extended clusters are only allowed in version 6
         if extended && version != 6 {
@@ -238,7 +238,7 @@ impl<'a> InnerCluster<'a> {
         Ok(())
     }
 
-    fn get_blob<'b>(&'b self, idx: u32) -> Result<&'b [u8]> {
+    fn get_blob(&self, idx: u32) -> Result<&[u8]> {
         match self.blob_list {
             Some(ref list) => {
                 let start = list[idx as usize] as usize;

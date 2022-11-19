@@ -1,5 +1,5 @@
 /// Representation of MimeTypes.
-#[derive(Debug, PartialEq)]
+#[derive(Debug, PartialEq, Eq)]
 pub enum MimeType {
     /// A special "MimeType" that represents a redirection
     Redirect,

@@ -45,7 +45,7 @@ fn main() {
     let zim = Zim::new(input).ok().unwrap();
 
     // map between cluster and directory entry
-    let mut cluster_map = HashMap::new();
+    let mut cluster_map: HashMap<u32, Vec<_>> = HashMap::new();
 
     let mut p1 = mb.create_bar(zim.header.cluster_count as u64);
     let mut p3 = mb.create_bar(zim.header.cluster_count as u64);
@@ -59,7 +59,7 @@ fn main() {
 
     for i in zim.iterate_by_urls() {
         if let Some(Target::Cluster(cid, _)) = i.target {
-            cluster_map.entry(cid).or_insert(Vec::new()).push(i);
+            cluster_map.entry(cid).or_default().push(i);
         }
         p1.inc();
     }

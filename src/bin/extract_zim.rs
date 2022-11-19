@@ -121,7 +121,7 @@ fn safe_write<T: AsRef<[u8]>>(path: &Path, data: T, count: usize) {
 
     ensure_dir(contain_path);
 
-    match File::create(&path) {
+    match File::create(path) {
         Err(why) => {
             if count < 3 {
                 safe_write(path, data, count + 1);

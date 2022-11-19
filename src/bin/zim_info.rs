@@ -36,7 +36,7 @@ fn main() {
     println!("Title Index Pos: {}", zim_file.header.title_ptr_pos);
     println!("Cluster Count: {}", zim_file.header.cluster_count);
     println!("Cluster Pointer Pos: {}", zim_file.header.cluster_ptr_pos);
-    println!("Checksum: {}", hex::encode(&zim_file.checksum));
+    println!("Checksum: {}", hex::encode(zim_file.checksum));
     println!("Checksum Pos: {}", zim_file.header.checksum_pos);
 
     let mut compressions = HashSet::new();
