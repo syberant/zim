@@ -3,7 +3,7 @@ extern crate pbr;
 extern crate stopwatch;
 extern crate zim;
 
-use clap::{App, Arg};
+use clap::Parser;
 use pbr::MultiBar;
 use std::collections::HashMap;
 use std::fs::File;
@@ -13,28 +13,25 @@ use std::thread;
 use stopwatch::Stopwatch;
 use zim::{Target, Zim};
 
-fn main() {
-    let matches = App::new("zim-linkr")
-        .version("0.1")
-        .about("Link ipfs files via 'ipfs files' api")
-        .arg(
-            Arg::with_name("ROOT")
-                .help("Root of the extracted content in the 'ipfs files' api")
-                .required(true)
-                .index(1),
-        )
-        .arg(
-            Arg::with_name("INPUT")
-                .help("The zim file with link data in")
-                .required(true)
-                .index(2),
-        )
-        .get_matches();
+/// Link ipfs files via 'ipfs files' api.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None, name = "zim-linkr")]
+struct Args {
+    /// Root of the extracted content in the 'ipfs files' api
+    #[arg(index = 1)]
+    root: String,
+    /// The zim file with link data in
+    #[arg(index = 2)]
+    input: String,
+}
 
-    let root = matches.value_of("ROOT").unwrap();
+fn main() {
+    let args = Args::parse();
+
+    let root = &args.root;
     let root_output = Path::new(root);
 
-    let input = matches.value_of("INPUT").unwrap();
+    let input = &args.input;
     let mb = MultiBar::new();
 
     mb.println(&format!("Linking files using {} into {}:", input, root));

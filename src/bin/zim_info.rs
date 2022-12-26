@@ -1,22 +1,20 @@
 use std::collections::HashSet;
 
-use clap::{App, Arg};
+use clap::Parser;
 use num_format::{Locale, ToFormattedString};
 use zim::{Result, Zim};
 
-fn main() -> Result<()> {
-    let matches = App::new("zim-info")
-        .version("0.1")
-        .about("Inspect zim files")
-        .arg(
-            Arg::with_name("INPUT")
-                .help("The zim file to inspect")
-                .required(true)
-                .index(1),
-        )
-        .get_matches();
+/// Inspect zim files
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// The zim file to inspect
+    input: String,
+}
 
-    let input = matches.value_of("INPUT").unwrap();
+fn main() -> Result<()> {
+    let args = Args::parse();
+    let input = &args.input;
 
     println!("Inspecting: {}\n", input);
 

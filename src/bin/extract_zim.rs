@@ -4,49 +4,38 @@ use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
 use std::time::Duration;
 
-use clap::{App, Arg};
+use clap::Parser;
 use indicatif::{ProgressBar, ProgressStyle};
 use rayon::prelude::*;
 use stopwatch::Stopwatch;
 use zim::{Cluster, DirectoryEntry, MimeType, Namespace, Target, Zim};
 
+/// Extract zim files into their on disk structure.
+#[derive(Parser, Debug)]
+#[command(author, version, about, long_about = None)]
+struct Args {
+    /// Output directory.
+    #[arg(long, short)]
+    out: Option<String>,
+    /// Skip generating hard links
+    #[arg(long, default_value_t = false)]
+    skip_link: bool,
+    /// Write files to disk, instead of using hard links
+    #[arg(long, default_value_t = false)]
+    flatten_link: bool,
+    #[arg(required = true)]
+    input: String,
+}
+
 fn main() {
-    let matches = App::new("zimextractor")
-        .version("0.1")
-        .about("Extract zim files")
-        .arg(
-            Arg::with_name("out")
-                .short('o')
-                .long("out")
-                .help("Output directory")
-                .takes_value(true),
-        )
-        .arg(
-            Arg::with_name("skip-link")
-                .long("skip-link")
-                .help("Skip genrating hard links")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::with_name("flatten-link")
-                .long("flatten-link")
-                .help("Write files to disk, instead of using hard links")
-                .takes_value(false),
-        )
-        .arg(
-            Arg::with_name("INPUT")
-                .help("Set the zim file to extract")
-                .required(true)
-                .index(1),
-        )
-        .get_matches();
+    let args = Args::parse();
 
-    let skip_link = matches.is_present("skip-link");
-    let flatten_link = matches.is_present("flatten-link");
-    let out = matches.value_of("out").unwrap_or("out");
-    let root_output = Path::new(out);
+    let skip_link = args.skip_link;
+    let flatten_link = args.flatten_link;
+    let out = args.out.unwrap_or_else(|| "out".to_string());
+    let root_output = Path::new(&out);
 
-    let input = matches.value_of("INPUT").unwrap();
+    let input = &args.input;
 
     println!("Extracting file: {} to {}\n", input, out);
     println!("Generating symlinks: {}", !skip_link);
