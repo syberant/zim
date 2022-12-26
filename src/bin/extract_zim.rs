@@ -120,9 +120,9 @@ fn main() {
 
 fn safe_write<T: AsRef<[u8]>>(path: &Path, data: T, count: usize) {
     let display = path.display();
-    let contain_path = path.parent().unwrap();
-
-    ensure_dir(contain_path);
+    if let Some(contain_path) = path.parent() {
+        ensure_dir(contain_path);
+    }
 
     match File::create(path) {
         Err(why) => {
@@ -220,8 +220,9 @@ fn make_link(src: PathBuf, mut dst: PathBuf, flatten_link: bool) {
     if !src.exists() {
         eprintln!("Warning: link source doesn't exist: {}", src.display());
     } else if !dst.exists() {
-        let contain_path = dst.parent().unwrap();
-        ensure_dir(contain_path);
+        if let Some(contain_path) = dst.parent() {
+            ensure_dir(contain_path);
+        }
 
         if let Some(ext) = src.extension() {
             if dst.extension().is_none() || dst.extension().unwrap() != ext {
