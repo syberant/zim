@@ -41,6 +41,7 @@ pub struct Zim {
 pub type Checksum = GenericArray<u8, <Md5 as OutputSizeUser>::OutputSize>;
 
 /// A ZIM file starts with a header.
+#[derive(Debug)]
 pub struct ZimHeader {
     /// Major version, either 5 or 6
     pub version_major: u16,

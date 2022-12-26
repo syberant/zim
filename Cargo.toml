@@ -29,6 +29,7 @@ rayon = "1.3.0"
 ouroboros = "0.15.0"
 thiserror = "1.0.31"
 zstd = "0.11.2"
+num-format = "0.4.4"
 
 [[bin]]
 name = "extract-zim"

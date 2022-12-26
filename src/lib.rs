@@ -18,6 +18,7 @@ mod zim;
 
 pub use crate::cluster::Cluster;
 pub use crate::directory_entry::DirectoryEntry;
+pub use crate::errors::{Error, Result};
 pub use crate::mime_type::MimeType;
 pub use crate::namespace::Namespace;
 pub use crate::target::Target;

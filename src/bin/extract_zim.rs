@@ -2,6 +2,7 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{BufWriter, Write};
 use std::path::{Path, PathBuf};
+use std::time::Duration;
 
 use clap::{App, Arg};
 use indicatif::{ProgressBar, ProgressStyle};
@@ -63,6 +64,7 @@ fn main() {
     println!();
 
     let pb = ProgressBar::new(zim_file.article_count() as u64);
+    pb.enable_steady_tick(Duration::from_millis(100));
     let style = ProgressStyle::default_bar()
         .template(
             "{msg}\n{spinner:.green} [{elapsed_precise}] [{bar:40.cyan/blue}] {pos}/{len} ({eta})",
@@ -150,7 +152,7 @@ fn ensure_dir(path: &Path) {
     }
 
     std::fs::create_dir_all(path)
-        .unwrap_or_else(|e| ignore_exists_err(e, &format!("create: {}", path.display())));
+        .unwrap_or_else(|e| ignore_exists_err(e, format!("create: {}", path.display())));
 }
 
 fn process_file<'a>(
@@ -245,6 +247,7 @@ fn make_link(src: PathBuf, mut dst: PathBuf, flatten_link: bool) {
         }
     }
 }
+
 fn ignore_exists_err<T: AsRef<str>>(e: std::io::Error, msg: T) {
     use std::io::ErrorKind::*;
 

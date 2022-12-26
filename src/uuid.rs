@@ -1,8 +1,7 @@
-use std::fmt;
+use std::fmt::{self, Debug};
 
 const HEX: &[u8] = b"0123456789abcdef";
 
-#[derive(Debug)]
 pub struct Uuid([u8; 16]);
 
 impl Uuid {
@@ -16,6 +15,12 @@ impl Uuid {
 
     fn lo(&self, i: usize) -> u8 {
         HEX[(self.0[i] & 0xF) as usize]
+    }
+}
+
+impl Debug for Uuid {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "{}", self)
     }
 }
 
