@@ -1,3 +1,5 @@
+use std::num::TryFromIntError;
+
 use thiserror::Error;
 
 pub type Result<T> = std::result::Result<T, Error>;
@@ -28,6 +30,8 @@ pub enum Error {
     OutOfBounds,
     #[error("failed to parse: {0}")]
     Parsing(#[from] Box<dyn std::error::Error + Send + Sync>),
+    #[error(transparent)]
+    TryFromIntError(#[from] TryFromIntError),
 }
 
 impl From<std::string::FromUtf8Error> for Error {

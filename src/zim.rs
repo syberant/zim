@@ -82,7 +82,6 @@ impl Zim {
         let master_view = unsafe { Mmap::map(&f)? };
 
         let (header, mime_table) = parse_header(&master_view)?;
-
         let url_list = parse_url_list(&master_view, header.url_ptr_pos, header.article_count)?;
         let article_list =
             parse_article_list(&master_view, header.title_ptr_pos, header.article_count)?;
@@ -259,8 +258,8 @@ fn parse_header(master_view: &Mmap) -> Result<(ZimHeader, Vec<String>)> {
 /// Parses the URL Pointer List.
 /// See https://wiki.openzim.org/wiki/ZIM_file_format#URL_Pointer_List_.28urlPtrPos.29
 fn parse_url_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Vec<u64>> {
-    let start = ptr_pos as usize;
-    let end = (ptr_pos + count as u64 * 8) as usize;
+    let start = usize::try_from(ptr_pos)?;
+    let end = start + usize::try_from(count)? * 8;
     let list_view = master_view.get(start..end).ok_or(Error::OutOfBounds)?;
     let mut cur = Cursor::new(list_view);
 
@@ -273,8 +272,9 @@ fn parse_url_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Vec<u6
 }
 
 fn parse_article_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Vec<u32>> {
-    let start = ptr_pos as usize;
-    let end = (ptr_pos as u32 + count * 4) as usize;
+    let start = usize::try_from(ptr_pos)?;
+    let end = start + usize::try_from(count)? * 4;
+
     let list_view = master_view.get(start..end).ok_or(Error::OutOfBounds)?;
 
     let mut cur = Cursor::new(list_view);
@@ -288,8 +288,8 @@ fn parse_article_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Ve
 }
 
 fn parse_cluster_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Vec<u64>> {
-    let start = ptr_pos as usize;
-    let end = (ptr_pos as u32 + count * 8) as usize;
+    let start = usize::try_from(ptr_pos)?;
+    let end = start + usize::try_from(count)? * 8;
     let cluster_list_view = master_view.get(start..end).ok_or(Error::OutOfBounds)?;
 
     let mut cluster_cur = Cursor::new(cluster_list_view);
@@ -302,7 +302,8 @@ fn parse_cluster_list(master_view: &Mmap, ptr_pos: u64, count: u32) -> Result<Ve
 
 /// Read out the the 16 byte long MD5 checksum.
 fn read_checksum(master_view: &Mmap, checksum_pos: u64) -> Result<Checksum> {
-    match master_view.get(checksum_pos as usize..checksum_pos as usize + 16) {
+    let checksum_pos = usize::try_from(checksum_pos)?;
+    match master_view.get(checksum_pos..checksum_pos + 16) {
         Some(raw) => {
             let mut arr = GenericArray::default();
             arr.copy_from_slice(raw);
