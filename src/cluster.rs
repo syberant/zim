@@ -111,8 +111,8 @@ impl<'a> Cluster<'a> {
         let lock = self.0.read().unwrap();
         let list = lock.blob_list.as_ref()?;
         
-        let start = list.get(idx as usize)? as usize;
-        let end = list.get(idx as usize + 1).unwrap_or(lock.size) as usize;
+        let start = *list.get(idx as usize)? as usize;
+        let end = *list.get(idx as usize + 1).unwrap_or(&lock.size) as usize;
 
         Some(end - start)
     }
