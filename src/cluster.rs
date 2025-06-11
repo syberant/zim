@@ -104,6 +104,19 @@ impl<'a> Cluster<'a> {
         self.0.read().unwrap().compression
     }
 
+    /// Returns the size in bytes of the blob with index `idx`.
+    ///
+    /// Returns `None` if `idx` is out of bounds.
+    pub fn get_blob_size(&self, idx: u32) -> Option<usize> {
+        let lock = self.0.read().unwrap();
+        let list = lock.blob_list.as_ref()?;
+        
+        let start = list.get(idx as usize)? as usize;
+        let end = list.get(idx as usize + 1).unwrap_or(lock.size) as usize;
+
+        Some(end - start)
+    }
+
     pub fn get_blob<'b: 'a>(&'b self, idx: u32) -> Result<Blob<'a, 'b>> {
         {
             let lock = self.0.read().unwrap();
